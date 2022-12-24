@@ -1,0 +1,6 @@
+# Files and folders I don't want to upload
+secrets.py
+__pycache__
+# Computer stuff
+.vscode
+.DS_Store
