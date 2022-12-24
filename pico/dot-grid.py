@@ -154,7 +154,6 @@ def circle(x, y, r, c):
         epd.hline(x - a, y - i, a * 2, c)  # Upper half
 
 
-# Only if this is the main script (not an import...)
 try:
     # Tell Python that I want to use the Waveshare ePaper thing as my screen
     epd = EPD_5in83()
