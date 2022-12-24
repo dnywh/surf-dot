@@ -1,8 +1,8 @@
+# A simple script to wipe the ePaper display
+
 from machine import Pin, SPI
 import framebuf
 import utime
-import random
-import math
 
 # Display resolution
 EPD_WIDTH = 648
@@ -144,81 +144,13 @@ class EPD_5in83(framebuf.FrameBuffer):
         self.module_exit()
 
 
-# Circle function taken from Tony Goodhew:
-# https://www.instructables.com/Computer-Graphics-101-With-Pi-Pico-and-Colour-Disp/
-def circle(x, y, r, c):
-    epd.hline(x - r, y, r * 2, c)
-    for i in range(1, r):
-        a = int(math.sqrt(r * r - i * i))  # Pythagoras!
-        epd.hline(x - a, y + i, a * 2, c)  # Lower half
-        epd.hline(x - a, y - i, a * 2, c)  # Upper half
-
-
 # Only if this is the main script (not an import...)
-try:
+if __name__ == "__main__":
     # Tell Python that I want to use the Waveshare ePaper thing as my screen
     epd = EPD_5in83()
+    # Then go to sleep
+    epd.init()
     epd.Clear(0x00)
-
-    # Fill the entire screen with white (actually black hex code)
-    epd.fill(0x00)
-
-    # Set cols and rows (grid size)
-    cols = 24
-    rows = 24
-    # Set scale for each cell
-    cellScale = 16
-
-    # Center grid
-    offsetX = int((EPD_WIDTH - (cols * cellScale)) / 2)
-    offsetY = int((EPD_HEIGHT - (rows * cellScale)) / 2)
-
-    # Prepare variables
-    gridIndex = 0
-    valueX = 0
-    valueY = 0
-
-    # Traverse through rows top to bottom
-    for kk in range(rows):
-        # Traverse through cols left to right
-        for jj in range(cols):
-            # Paint a white square with black (inner) outline at that grid coordinate
-            epd.fill_rect(
-                (valueX + offsetX), (valueY + offsetY), cellScale, cellScale, 0
-            )
-
-            # Paint another square within that square at that grid coordinate
-            itemScale = random.randrange(2, cellScale)
-            # itemScale = int(cellScale / 2)  # Since it's radius
-
-            circle((valueX + offsetX), (valueY + offsetY), itemScale, 1)
-
-            # Code if using square
-            # Center that square within that cell
-            # itemOffsetXY = int((cellScale - itemScale) / 2)
-            # epd.fill_rect(
-            #     (valueX + offsetX + itemOffsetXY),
-            #     (valueY + offsetY + itemOffsetXY),
-            #     itemScale,
-            #     itemScale,
-            #     1,
-            # )
-
-            # Move to the next column in the row
-            valueX += cellScale
-            # Store what gridIndex we're up to
-            gridIndex += 1
-        # Go to next row down
-        valueY += cellScale
-        # Go to first column on left
-        valueX = 0
-
-    # Render all of the above to screen
-    epd.display(epd.buffer)
-
-# Exit plan
-# TODO: See if this is redundant in MicroPython
-except KeyboardInterrupt:
-    print("Exiting...")
-    epd.module_exit()
-    exit()
+    epd.delay_ms(2000)
+    print("Going to sleep.")
+    epd.sleep()
