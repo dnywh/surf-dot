@@ -13,8 +13,6 @@ try:
     # Get a drawing context
     draw = ImageDraw.Draw(canvas)
 
-    # draw.rectangle(((0, 0), (20, 20)), fill="black")  # Black
-
     # Set cols and rows (grid size)
     cols = 24
     rows = 24
@@ -34,11 +32,6 @@ try:
     for kk in range(rows):
         # Traverse through cols left to right
         for jj in range(cols):
-            # # Paint a white square with black (inner) outline at that grid coordinate
-            # epd.fill_rect(
-            #     (valueX + offsetX), (valueY + offsetY), cellScale, cellScale, 0
-            # )
-
             cellX = valueX + offsetX
             cellY = valueY + offsetY
 
@@ -50,21 +43,8 @@ try:
             # Paint another square within that square at that grid coordinate
             itemScale = random.randrange(2, cellScale)
             itemOffset = int((cellScale - itemScale) / 2)
-            # itemScale = int(cellScale / 2)  # Since it's radius
-            # circle((valueX + offsetX), (valueY + offsetY), itemScale, 1)
             draw.ellipse(
-                ((cellX, cellY), (cellX + itemScale, cellY + itemScale)), fill="black")
-
-            # Code if using square
-            # Center that square within that cell
-            # itemOffsetXY = int((cellScale - itemScale) / 2)
-            # epd.fill_rect(
-            #     (valueX + offsetX + itemOffsetXY),
-            #     (valueY + offsetY + itemOffsetXY),
-            #     itemScale,
-            #     itemScale,
-            #     1,
-            # )
+                ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + itemScale, cellY + itemOffset + itemScale)), fill="black")
 
             # Move to the next column in the row
             valueX += cellScale
