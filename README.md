@@ -3,7 +3,7 @@
 Use your Pi and Waveshare ePaper/e-ink display to show the day's surf report in the style of Kōhei Sugiura:
 
 ![Kōhei Sugiura's stamps for the 1972 Olympics](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg/1600px-Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg?20070622084910)
-_Source: [Wikimedia commons](https://commons.wikimedia.org/wiki/File:Stamps_of_Germany_(BRD),_Olympiade_1972,\_Blockausgabe_1971,\_Markenblock.jpg#/media/File:Stamps_of_Germany_(BRD),_Olympiade_1972,\_Blockausgabe_1971,\_Markenblock.jpg)_
+_Source: [Wikimedia commons](https://w.wiki/69Lz)_
 
 ## What do I need to get started?
 
@@ -36,4 +36,4 @@ Surf Dot unfortunately needs all three.
 
 See [this gist](https://gist.github.com/dnywh/7a56db9b077843e5926ff594c7ecd375) instead for a Pico W artwork generator based on Kōhei Sugiura's work. It's essentially Surf Dot with random data.
 
-If you still want to try getting this to run on the Pico, feel free to start from my [last commit](#TODO) before giving up. Please reach out if you get it to work.
+If you still want to try getting this to run on the Pico, feel free to start from my [last commit](https://github.com/dnywh/surf-dot/blob/ac531aa3aa59acd1ebbf5a066347d1437d4da284/src/pico/app.py) before giving up. Please reach out if you get it to work.
