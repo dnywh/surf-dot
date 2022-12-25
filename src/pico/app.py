@@ -241,26 +241,6 @@ try:
         timeAsIndexThroughDay = round(hour + minAsFraction)
         tidesKnownIndexes.append(timeAsIndexThroughDay)
         tidesList[timeAsIndexThroughDay] = i["height"]
-    print(tidesKnownIndexes)
-    print(tidesList)
-
-    # Fill in missing items
-    # for i in tidesList:
-    #     if i != None:
-    # steps = []
-    # for item, index in tidesKnownIndexes:
-    #     if index > 0:
-    #         steps.append(index + 1 - index)
-    # print(steps)
-
-    # for i in range(cols):
-    #     # If there already exists a known tide at this index...
-    #     if tidesKnown[i][1]:
-    #         # Append it to the full list
-    #         tidesList.append(tidesKnown[i][1])
-    #     else:
-    #         # Calculate this index's value
-    #         tidesList.append(0.00)
 
     # Lastly map each item value to match the amount of rows for a nice Y pos
     for i in tidesList:
@@ -316,9 +296,8 @@ try:
     # Start rendering
     # Tell Python that I want to use the Waveshare ePaper thing as my screen
     epd = EPD_5in83()
-    epd.Clear(0x00)
+    epd.Clear(0)
     # Fill the entire screen with white (actually black hex code)
-    # epd.fill(0x00)  # TODO: remove, redundant?
 
     # Center grid
     offsetX = int((EPD_WIDTH - (cols * cellScale)) / 2)
@@ -333,27 +312,12 @@ try:
     for kk in range(rows):
         # Traverse through cols left to right
         for jj in range(cols):
-            # Paint a white square with black (inner) outline at that grid coordinate
-            epd.fill_rect(
-                (valueX + offsetX), (valueY + offsetY), cellScale, cellScale, 0
-            )
 
             # Paint another square within that square at that grid coordinate
             itemScale = 2
             # itemScale = int(cellScale / 2)  # Since it's radius
 
             circle((valueX + offsetX), (valueY + offsetY), itemScale, 1)
-
-            # Code if using square
-            # Center that square within that cell
-            # itemOffsetXY = int((cellScale - itemScale) / 2)
-            # epd.fill_rect(
-            #     (valueX + offsetX + itemOffsetXY),
-            #     (valueY + offsetY + itemOffsetXY),
-            #     itemScale,
-            #     itemScale,
-            #     1,
-            # )
 
             # Move to the next column in the row
             valueX += cellScale

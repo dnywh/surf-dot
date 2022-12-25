@@ -1,16 +1,7 @@
 import secrets
-
-# Pico swap
-# from time import sleep
-from PIL import Image, ImageDraw
-
-# Pico swap
 import requests
-# import urequests
-
-# Pico swap
 from datetime import datetime
-# import utime
+from PIL import Image, ImageDraw
 
 
 # Secrets
@@ -47,21 +38,10 @@ def numberToRange(num, inMin, inMax, outMin, outMax):
     return outMin + (float(num - inMin) / float(inMax - inMin) * (outMax - outMin))
 
 
-# Pico swap
-# def connect():
-#     # Connect to WLAN
-#     print("Connecting...")
-
-
 try:
-    # Pico swap
-    # connect()
-
     print("Checking surf...")
 
-    # Pico swap
     date = datetime.today().strftime('%Y-%m-%d')
-    # datetime = f"{utime.localtime()[0]}-{utime.localtime()[1]}-{utime.localtime()[2]}"
 
     # Parse surf data
     surfData = requests.get(
@@ -83,7 +63,6 @@ try:
     # Replace known items
     for i in tideData:
         # Calculate index of each tide data element based on time
-        # Pico swap
         dateString = datetime.strptime(i["dateTime"], "%Y-%m-%d %H:%M:%S")
         hour = int(datetime.strftime(dateString, "%H"))
         min = int(datetime.strftime(dateString, "%M"))
@@ -165,7 +144,6 @@ try:
     # print(combinedScores)
 
     # Start rendering
-    # Pico swap
     canvas = Image.new(
         "1", (EPD_WIDTH, EPD_HEIGHT), 255
     )  # 255: clear the frame
@@ -213,7 +191,6 @@ try:
             itemOffset = int((cellScale - dotWidth) / 2)
 
             # Draw the dot
-            # Pico swap
             draw.ellipse(
                 ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + dotWidth, cellY + itemOffset + dotWidth)), fill="black")
 

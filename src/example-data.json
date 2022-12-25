@@ -1,0 +1,383 @@
+{
+  "location": {
+    "id": 6833,
+    "name": "Coolum Beach",
+    "region": "Sunshine Coast",
+    "state": "QLD",
+    "postcode": "4573",
+    "timeZone": "Australia/Brisbane",
+    "lat": -26.5272,
+    "lng": 153.0905,
+    "typeId": 2
+  },
+  "forecasts": {
+    "tides": {
+      "days": [
+        {
+          "dateTime": "2022-12-25 00:00:00",
+          "entries": [
+            {
+              "dateTime": "2022-12-25 02:39:00",
+              "height": 0.07,
+              "type": "low"
+            },
+            {
+              "dateTime": "2022-12-25 09:31:00",
+              "height": 2.14,
+              "type": "high"
+            },
+            {
+              "dateTime": "2022-12-25 16:10:00",
+              "height": 0.32,
+              "type": "low"
+            },
+            {
+              "dateTime": "2022-12-25 21:36:00",
+              "height": 1.34,
+              "type": "high"
+            }
+          ]
+        }
+      ],
+      "units": { "height": "m" },
+      "issueDateTime": "2022-11-06 10:04:34",
+      "carousel": { "size": 2556, "start": 2185 }
+    },
+    "swell": {
+      "days": [
+        {
+          "dateTime": "2022-12-25 00:00:00",
+          "entries": [
+            {
+              "dateTime": "2022-12-25 00:00:00",
+              "direction": 119.82,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 9.18
+            },
+            {
+              "dateTime": "2022-12-25 01:00:00",
+              "direction": 120.39,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 9.17
+            },
+            {
+              "dateTime": "2022-12-25 02:00:00",
+              "direction": 120.76,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 9.14
+            },
+            {
+              "dateTime": "2022-12-25 03:00:00",
+              "direction": 120.99,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 9.11
+            },
+            {
+              "dateTime": "2022-12-25 04:00:00",
+              "direction": 121.13,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 9.07
+            },
+            {
+              "dateTime": "2022-12-25 05:00:00",
+              "direction": 121.15,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 9.04
+            },
+            {
+              "dateTime": "2022-12-25 06:00:00",
+              "direction": 121.04,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 9.01
+            },
+            {
+              "dateTime": "2022-12-25 07:00:00",
+              "direction": 120.79,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.98
+            },
+            {
+              "dateTime": "2022-12-25 08:00:00",
+              "direction": 120.47,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.95
+            },
+            {
+              "dateTime": "2022-12-25 09:00:00",
+              "direction": 120.15,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.93
+            },
+            {
+              "dateTime": "2022-12-25 10:00:00",
+              "direction": 119.83,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.91
+            },
+            {
+              "dateTime": "2022-12-25 11:00:00",
+              "direction": 119.57,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.89
+            },
+            {
+              "dateTime": "2022-12-25 12:00:00",
+              "direction": 119.36,
+              "directionText": "ESE",
+              "height": 0.7,
+              "period": 8.87
+            },
+            {
+              "dateTime": "2022-12-25 13:00:00",
+              "direction": 119.22,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.84
+            },
+            {
+              "dateTime": "2022-12-25 14:00:00",
+              "direction": 119.13,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.82
+            },
+            {
+              "dateTime": "2022-12-25 15:00:00",
+              "direction": 119.08,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.79
+            },
+            {
+              "dateTime": "2022-12-25 16:00:00",
+              "direction": 118.99,
+              "directionText": "ESE",
+              "height": 0.9,
+              "period": 8.75
+            },
+            {
+              "dateTime": "2022-12-25 17:00:00",
+              "direction": 118.35,
+              "directionText": "ESE",
+              "height": 0.9,
+              "period": 8.68
+            },
+            {
+              "dateTime": "2022-12-25 18:00:00",
+              "direction": 118.19,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.61
+            },
+            {
+              "dateTime": "2022-12-25 19:00:00",
+              "direction": 118.06,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.56
+            },
+            {
+              "dateTime": "2022-12-25 20:00:00",
+              "direction": 117.92,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.52
+            },
+            {
+              "dateTime": "2022-12-25 21:00:00",
+              "direction": 117.77,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.49
+            },
+            {
+              "dateTime": "2022-12-25 22:00:00",
+              "direction": 117.64,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.46
+            },
+            {
+              "dateTime": "2022-12-25 23:00:00",
+              "direction": 117.53,
+              "directionText": "ESE",
+              "height": 0.8,
+              "period": 8.44
+            }
+          ]
+        }
+      ],
+      "units": { "height": "m", "period": "sec" },
+      "issueDateTime": "2022-12-25 06:22:26",
+      "carousel": { "size": 18, "start": 3 }
+    },
+    "wind": {
+      "days": [
+        {
+          "dateTime": "2022-12-25 00:00:00",
+          "entries": [
+            {
+              "dateTime": "2022-12-25 00:00:00",
+              "speed": 12.2,
+              "direction": 346,
+              "directionText": "NNW"
+            },
+            {
+              "dateTime": "2022-12-25 01:00:00",
+              "speed": 11.2,
+              "direction": 294,
+              "directionText": "WNW"
+            },
+            {
+              "dateTime": "2022-12-25 02:00:00",
+              "speed": 12.2,
+              "direction": 290,
+              "directionText": "WNW"
+            },
+            {
+              "dateTime": "2022-12-25 03:00:00",
+              "speed": 8.6,
+              "direction": 311,
+              "directionText": "NW"
+            },
+            {
+              "dateTime": "2022-12-25 04:00:00",
+              "speed": 10.1,
+              "direction": 283,
+              "directionText": "WNW"
+            },
+            {
+              "dateTime": "2022-12-25 05:00:00",
+              "speed": 9.4,
+              "direction": 285,
+              "directionText": "WNW"
+            },
+            {
+              "dateTime": "2022-12-25 06:00:00",
+              "speed": 8.6,
+              "direction": 252,
+              "directionText": "WSW"
+            },
+            {
+              "dateTime": "2022-12-25 07:00:00",
+              "speed": 9.7,
+              "direction": 248,
+              "directionText": "WSW"
+            },
+            {
+              "dateTime": "2022-12-25 08:00:00",
+              "speed": 9,
+              "direction": 160,
+              "directionText": "SSE"
+            },
+            {
+              "dateTime": "2022-12-25 09:00:00",
+              "speed": 10.1,
+              "direction": 126,
+              "directionText": "SE"
+            },
+            {
+              "dateTime": "2022-12-25 10:00:00",
+              "speed": 12.2,
+              "direction": 73,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 11:00:00",
+              "speed": 14.8,
+              "direction": 75,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 12:00:00",
+              "speed": 17.3,
+              "direction": 76,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 13:00:00",
+              "speed": 19.8,
+              "direction": 72,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 14:00:00",
+              "speed": 19.4,
+              "direction": 75,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 15:00:00",
+              "speed": 20.2,
+              "direction": 76,
+              "directionText": "ENE"
+            },
+            {
+              "dateTime": "2022-12-25 16:00:00",
+              "speed": 20.5,
+              "direction": 80,
+              "directionText": "E"
+            },
+            {
+              "dateTime": "2022-12-25 17:00:00",
+              "speed": 22.3,
+              "direction": 80,
+              "directionText": "E"
+            },
+            {
+              "dateTime": "2022-12-25 18:00:00",
+              "speed": 22,
+              "direction": 85,
+              "directionText": "E"
+            },
+            {
+              "dateTime": "2022-12-25 19:00:00",
+              "speed": 21.2,
+              "direction": 94,
+              "directionText": "E"
+            },
+            {
+              "dateTime": "2022-12-25 20:00:00",
+              "speed": 21.6,
+              "direction": 106,
+              "directionText": "ESE"
+            },
+            {
+              "dateTime": "2022-12-25 21:00:00",
+              "speed": 20.9,
+              "direction": 109,
+              "directionText": "ESE"
+            },
+            {
+              "dateTime": "2022-12-25 22:00:00",
+              "speed": 22.3,
+              "direction": 114,
+              "directionText": "ESE"
+            },
+            {
+              "dateTime": "2022-12-25 23:00:00",
+              "speed": 23,
+              "direction": 118,
+              "directionText": "ESE"
+            }
+          ]
+        }
+      ],
+      "units": { "speed": "km/h" },
+      "issueDateTime": "2022-12-25 08:34:38",
+      "carousel": { "size": 10, "start": 3 }
+    }
+  }
+}
