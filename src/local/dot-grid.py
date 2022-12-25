@@ -58,21 +58,54 @@ try:
     surfData = requests.get(
         f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}").json()
 
-    # Get swell height
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
     swellDataHeights = []
 
-    # print(len(swellData))
-    for val in swellData:
-        convertedHeight = int(numberToRange(
-            val["height"], 0, 3, 1, cellScale * 1.5))
-        # print(val["height"], "->",
-        #       convertedHeight)
-        swellDataHeights.append(convertedHeight)
-    # print(swellDataHeights)
-    # print()
-    # print(swellData)
+    windData = surfData["forecasts"]["wind"]["days"][0]["entries"]
+    windDataDirections = []
+    windDataSpeeds = []
 
+    # Swell height
+    # 24 items by default (should equal rows length)
+    for val in swellData:
+        mappedHeight = int(numberToRange(
+            val["height"], 0, 3, 0, 16))
+        swellDataHeights.append(mappedHeight)
+    # print(swellDataHeights)
+
+    # Wind direction
+    # 24 items by default (should equal rows length)
+    for val in windData:
+        # TODO: make range/map rather than if statement
+        if val["direction"] >= 180 and val["direction"] <= 315:
+            # Best possible wind conditions, give high score
+            windDataDirections.append(10)
+        elif val["direction"] >= 135 and val["direction"] < 180:
+            # Okay wind conditions, give medium score
+            windDataDirections.append(6)
+        else:
+            # Poor wind conditions, give nothing
+            windDataDirections.append(0)
+    # print(windDataDirections)
+
+     # Wind speed
+    # 24 items by default (should equal rows length)
+    # TODO: Merge in wind direction because strong speed in the *wrong* direction is extra bad
+    for val in windData:
+        mappedSpeed = int(numberToRange(
+            val["speed"], 0, 30, 0, 10))
+        windDataSpeeds.append(mappedSpeed)
+    print(windDataSpeeds)
+
+    # Combine all of the above into a final score
+    combinedScores = []
+    for i in range(0, rows):
+        # Add the values together
+        combinedScores.append(
+            swellDataHeights[i] + windDataDirections[i] + windDataSpeeds[i])
+
+
+# Start rendering
     canvas = Image.new(
         "1", (EPD_WIDTH, EPD_HEIGHT), 255
     )  # 255: clear the frame
@@ -103,7 +136,7 @@ try:
             # Paint another square within that square at that grid coordinate
             # circleWidth = random.randint(2, cellScale * 1.5)
             # circleWidth = 2
-            circleWidth = swellDataHeights[jj]
+            circleWidth = combinedScores[jj]
             itemOffset = int((cellScale - circleWidth) / 2)
             draw.ellipse(
                 ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + circleWidth, cellY + itemOffset + circleWidth)), fill="black")
