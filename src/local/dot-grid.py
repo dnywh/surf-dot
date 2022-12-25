@@ -27,6 +27,7 @@ rows = 24
 # Set scale for each cell
 cellScale = 16
 
+minDotSize = 2
 
 # Display resolution
 EPD_WIDTH = 648
@@ -59,50 +60,49 @@ try:
         f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}").json()
 
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
-    swellDataHeights = []
+    swellDataScores = []
 
     windData = surfData["forecasts"]["wind"]["days"][0]["entries"]
-    windDataDirections = []
-    windDataSpeeds = []
+    windDataScores = []
+    # windDataSpeeds = []
 
     # Swell height
     # 24 items by default (should equal rows length)
-    for val in swellData:
+    for i in swellData:
         mappedHeight = int(numberToRange(
-            val["height"], 0, 3, 0, 16))
-        swellDataHeights.append(mappedHeight)
-    # print(swellDataHeights)
+            i["height"], 0, 3, 0, 14))
+        swellDataScores.append(mappedHeight)
+    # print(swellDataScores)
 
-    # Wind direction
+    # Wind direction and speed
     # 24 items by default (should equal rows length)
-    for val in windData:
+    for i in windData:
+        mappedSpeed = int(numberToRange(i["speed"], 0, 30, 0, 10))
         # TODO: make range/map rather than if statement
-        if val["direction"] >= 180 and val["direction"] <= 315:
+        if i["direction"] >= 180 and i["direction"] <= 315:
             # Best possible wind conditions, give high score
-            windDataDirections.append(10)
-        elif val["direction"] >= 135 and val["direction"] < 180:
+            windDataScores.append(10 + mappedSpeed)
+        elif i["direction"] >= 135 and i["direction"] < 180:
             # Okay wind conditions, give medium score
-            windDataDirections.append(6)
+            windDataScores.append(6 + mappedSpeed)
         else:
             # Poor wind conditions, give nothing
-            windDataDirections.append(0)
-    # print(windDataDirections)
-
-     # Wind speed
-    # 24 items by default (should equal rows length)
-    # TODO: Merge in wind direction because strong speed in the *wrong* direction is extra bad
-    for val in windData:
-        mappedSpeed = int(numberToRange(
-            val["speed"], 0, 30, 0, 10))
-        windDataSpeeds.append(mappedSpeed)
-    print(windDataSpeeds)
+            # Subtract increased wind since it's blowing in the wrong direction
+            windDataScores.append(0 - mappedSpeed)
+    # print(windDataScores)
 
     # Combine all of the above into a final score
     combinedScores = []
     for i in range(0, rows):
         # Add the values together
-        combinedScores.append(
-            swellDataHeights[i] + windDataDirections[i] + windDataSpeeds[i])
+        sum = swellDataScores[i] + windDataScores[i]
+        if sum < 1:
+            # For a negative score sum, set to a minimum so a visible dot appears
+            combinedScores.append(minDotSize)
+        else:
+            # Otherwise show the true score sum
+            combinedScores.append(sum)
+    print(combinedScores)
 
 
 # Start rendering
