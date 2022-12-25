@@ -15,6 +15,8 @@ BUSY_PIN = 13
 
 # Waveshare stuff
 # Forked from Waveshare's Pico ePaper-5.83py
+
+
 class EPD_5in83(framebuf.FrameBuffer):
     def __init__(self):
         self.reset_pin = Pin(RST_PIN, Pin.OUT)
@@ -152,5 +154,5 @@ if __name__ == "__main__":
     epd.init()
     epd.Clear(0x00)
     epd.delay_ms(2000)
-    print("Going to sleep.")
+    print("All done. Going to sleep.")
     epd.sleep()
