@@ -1,9 +1,8 @@
-from PIL import Image, ImageDraw
-import random
-# import math
 import secrets
-from time import sleep
 
+# Pico swap
+# from time import sleep
+from PIL import Image, ImageDraw
 
 # Pico swap
 import requests
@@ -59,6 +58,7 @@ try:
     # connect()
 
     print("Checking surf...")
+
     # Pico swap
     date = datetime.today().strftime('%Y-%m-%d')
     # datetime = f"{utime.localtime()[0]}-{utime.localtime()[1]}-{utime.localtime()[2]}"
@@ -69,8 +69,9 @@ try:
 
     tideData = surfData["forecasts"]["tides"]["days"][0]["entries"]
     # tidesList = [None] * cols
-    tidesList = [1] * cols  # Set to a default value for testing
+    tidesList = [0] * cols  # Set to a default value for testing
     tidesListMapped = []
+    tidesKnownIndexes = []
 
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
     swellDataScores = []
@@ -79,20 +80,30 @@ try:
     windDataScores = []
 
     # Tides
+    # Replace known items
     for i in tideData:
-        # Figure out index of timestamp
+        # Calculate index of each tide data element based on time
+        # Pico swap
         dateString = datetime.strptime(i["dateTime"], "%Y-%m-%d %H:%M:%S")
-        # print(dateString)
         hour = int(datetime.strftime(dateString, "%H"))
         min = int(datetime.strftime(dateString, "%M"))
+
         minAsFraction = min / 60
         timeAsIndexThroughDay = round(hour + minAsFraction)
-        # tidesKnown.append((timeAsIndexThroughDay, i["height"]))
+        tidesKnownIndexes.append(timeAsIndexThroughDay)
         tidesList[timeAsIndexThroughDay] = i["height"]
+    print(tidesKnownIndexes)
+    print(tidesList)
 
-    # print(tidesList)
+    # Fill in missing items
+    # for i in tidesList:
+    #     if i != None:
+    # steps = []
+    # for item, index in tidesKnownIndexes:
+    #     if index > 0:
+    #         steps.append(index + 1 - index)
+    # print(steps)
 
-    # Now fill in gaps
     # for i in range(cols):
     #     # If there already exists a known tide at this index...
     #     if tidesKnown[i][1]:
@@ -102,9 +113,9 @@ try:
     #         # Calculate this index's value
     #         tidesList.append(0.00)
 
-    # Lastly map to number to match the amount of rows and therefore figure out Y pos
+    # Lastly map each item value to match the amount of rows for a nice Y pos
     for i in tidesList:
-        mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 0, rows))
+        mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 2, rows))
         # Add this value to the new array
         tidesListMapped.append(mappedY)
     print(tidesListMapped)
@@ -153,8 +164,8 @@ try:
             combinedScores.append(sum)
     # print(combinedScores)
 
-
-# Start rendering
+    # Start rendering
+    # Pico swap
     canvas = Image.new(
         "1", (EPD_WIDTH, EPD_HEIGHT), 255
     )  # 255: clear the frame
@@ -183,24 +194,28 @@ try:
 
             # Shape
             # Paint another square within that square at that grid coordinate
-            # circleWidth = random.randint(2, cellScale * 1.5)
-            # circleWidth = 2
+            # dotWidth = random.randint(2, cellScale * 1.5)
+            # dotWidth = 2
 
             # Without tides
-            circleWidth = combinedScores[jj]
+            dotWidth = combinedScores[jj]
 
             # With tides
-            if tidesListMapped[jj] >= kk:
-                circleWidth = combinedScores[jj]
+            # Reversed to anchor at bottom
+            if rows - (tidesListMapped[jj]) <= kk:
+                # This dot's coordinates are within the tide height, so render fully according to its score
+                dotWidth = combinedScores[jj]
             else:
-                # This dot is ot within tide shape and fails the criteria, so render as small as possible
-                circleWidth = minDotSizeInactive
-            print(
-                f"x{jj}, y{kk} | Tide: {tidesListMapped[jj]}, Circle: {circleWidth}")
+                # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
+                dotWidth = minDotSizeInactive
 
-            itemOffset = int((cellScale - circleWidth) / 2)
+            # Calculate how to center this dot
+            itemOffset = int((cellScale - dotWidth) / 2)
+
+            # Draw the dot
+            # Pico swap
             draw.ellipse(
-                ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + circleWidth, cellY + itemOffset + circleWidth)), fill="black")
+                ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + dotWidth, cellY + itemOffset + dotWidth)), fill="black")
 
             # Move to the next column in the row
             valueX += cellScale
