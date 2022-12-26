@@ -37,3 +37,9 @@ Surf Dot unfortunately needs all three.
 See [this gist](https://gist.github.com/dnywh/7a56db9b077843e5926ff594c7ecd375) instead for a Pico W artwork generator based on Kōhei Sugiura's work. It's essentially Surf Dot with random data.
 
 If you still want to try getting this to run on the Pico, feel free to start from my [last commit](https://github.com/dnywh/surf-dot/blob/ac531aa3aa59acd1ebbf5a066347d1437d4da284/src/pico/app.py) before giving up. Please reach out if you get it to work.
+
+## Limitations
+
+### Willy Weather API
+
+The Willy Weather API is only useful for immediate forecasts, such as the current day. This is because removes past swell data if it is older than 48 hours. Wind data also seems to only be available a few days in advance.
