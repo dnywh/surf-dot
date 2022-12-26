@@ -62,7 +62,7 @@ def resampleList(originalList, targetTupleItem):
 
 try:
     date = datetime.today().strftime("%Y-%m-%d")
-    date = "2022-12-29"  # Override with a custom date (Willy Weather's API is limited to +-2 days from today)
+    # date = "2022-12-29"  # Override with a custom date (Willy Weather's API is limited to +-2 days from today)
     print(f"Checking surf for {date}...")
 
     # Parse surf data
@@ -207,12 +207,6 @@ try:
             if rows - (tidesMapped[jj]) <= kk:
                 # This dot's coordinates are within the tide height, so render fully according to its score
                 dotSize = combinedScores[jj]
-                # dotSize = int(
-                #     numberToRange(
-                #         combinedScores[jj], -10, 30, minDotSizeActive, maxDotSizeActive
-                #     )
-                # )
-                # print(dotSize)
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
                 dotSize = minDotSizeInactive
