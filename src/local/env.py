@@ -1,3 +1,0 @@
-SSID = "Danny's Home Wi-Fi Network"
-PASSWORD = "gr4c3-h0pp3r!"
-WILLY_WEATHER_API_KEY = "MDEyZDEwY2U0MGIwMDNkZjA5ZmNhOT"
