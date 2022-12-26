@@ -7,9 +7,7 @@ from PIL import Image, ImageDraw
 from scipy import signal
 
 # Secrets
-# Renamed to 'env' to avoid clashing with numpy
-ssid = env.SSID
-password = env.PASSWORD
+# Renamed to 'env' to avoid clashing with numpy's required file of the same name
 willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
 
 # Customise for your location

@@ -1,9 +1,9 @@
 # Files and folders I don't want to share
 secrets.py
 env.py
+# Computer stuff
 __pycache__
 .venv
-# Computer stuff
 .vscode
 .DS_Store
 
