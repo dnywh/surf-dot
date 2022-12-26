@@ -25,14 +25,14 @@ locationWindDirRangeBuffer = 22
 hourStart = 6
 hourEnd = 18
 
-# Set cols and rows (grid size)
-cols = 24
-rows = 24
-# Set scale for each cell
-cellScale = 16
-
 # Set design basics
-maxDotSizeActive = 20
+containerWidth = 384
+# Set cols and rows (grid size)
+cols = 24  # Must be at least 24
+rows = cols
+# Set scale for each cell
+cellScale = containerWidth / cols
+maxDotSizeActive = cellScale * 1.25
 minDotSizeActive = 4
 minDotSizeInactive = 2
 
@@ -125,7 +125,9 @@ try:
     swellDataResampled = resampleList(swellData, "height")
     # Create scores
     for i in swellDataResampled:
-        mappedHeight = int(numberToRange(i, 0, locationMaxSwellHeight, 0, 12))
+        mappedHeight = int(
+            numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.6)
+        )
         swellDataScores.append(mappedHeight)
     print("Swell:\t", swellDataScores)
 
@@ -134,14 +136,16 @@ try:
     windSpeedDataResampled = resampleList(windData, "speed")
     windDirDataResampled = resampleList(windData, "direction")
     for i in range(cols):
-        mappedSpeed = int(numberToRange(windSpeedDataResampled[i], 0, 30, 0, 6))
+        mappedSpeed = int(
+            numberToRange(windSpeedDataResampled[i], 0, 30, 0, maxDotSizeActive * 0.3)
+        )
         # Core range
         if (
             windDirDataResampled[i] >= locationWindDirRangeStart
             and windDirDataResampled[i] <= locationWindDirRangeEnd
         ):
             # Best possible wind conditions, give high score
-            windDataScores.append(8 + mappedSpeed)
+            windDataScores.append(maxDotSizeActive * 0.4 + mappedSpeed)
         # -locationWindDirRangeBuffer° of core range start
         elif (
             windDirDataResampled[i]
@@ -149,7 +153,7 @@ try:
             and windDirDataResampled[i] < locationWindDirRangeStart
         ):
             # Okay wind conditions, give medium score
-            windDataScores.append(4 + mappedSpeed)
+            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
         # +locationWindDirRangeBuffer° of core range end
         elif (
             windDirDataResampled[i] > locationWindDirRangeEnd
@@ -157,7 +161,7 @@ try:
             <= locationWindDirRangeEnd - locationWindDirRangeBuffer
         ):
             # Okay wind conditions, give medium score
-            windDataScores.append(4 + mappedSpeed)
+            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
         else:
             # Poor wind conditions, give nothing
             # Subtract increased wind since it's blowing in the wrong direction
