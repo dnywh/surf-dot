@@ -3,7 +3,7 @@
 Use your Pi and Waveshare ePaper/e-ink display to show the day's surf report in the style of Kōhei Sugiura:
 
 ![Kōhei Sugiura's stamps for the 1972 Olympics](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg/1600px-Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg?20070622084910)
-_Source: [Wikimedia commons](https://w.wiki/69Lz)_
+_Image source: [Wikimedia commons](https://w.wiki/69Lz)_
 
 ## What do I need to get started?
 

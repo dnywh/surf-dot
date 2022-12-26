@@ -15,6 +15,8 @@ locationMaxSwellHeight = 3
 locationMaxTideHeight = 3  # TODO: Must this match the SwellHeight?
 locationWindDirRangeStart = 180
 locationWindDirRangeEnd = 315
+# Amount of degrees on either side of range to consider as 'okay' wind conditions
+locationWindDirRangeBuffer = 22
 
 # Set cols and rows (grid size)
 cols = 24
@@ -23,7 +25,7 @@ rows = 24
 cellScale = 16
 
 # Set design basics
-minDotSizeActive = 8
+minDotSizeActive = 4
 minDotSizeInactive = 2
 
 # Display resolution
@@ -39,19 +41,17 @@ def numberToRange(num, inMin, inMax, outMin, outMax):
 
 
 try:
-    print("Checking surf...")
-
     date = datetime.today().strftime('%Y-%m-%d')
+    print(f"Checking surf for {date}...")
 
     # Parse surf data
     surfData = requests.get(
         f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}").json()
 
     tideData = surfData["forecasts"]["tides"]["days"][0]["entries"]
-    # tidesList = [None] * cols
-    tidesList = [0] * cols  # Set to a default value for testing
-    tidesListMapped = []
-    tidesKnownIndexes = []
+    tidesAll = [(0, 'unknown')] * cols
+    tidesKnown = []
+    tidesMapped = []
 
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
     swellDataScores = []
@@ -66,38 +66,35 @@ try:
         dateString = datetime.strptime(i["dateTime"], "%Y-%m-%d %H:%M:%S")
         hour = int(datetime.strftime(dateString, "%H"))
         min = int(datetime.strftime(dateString, "%M"))
-
         minAsFraction = min / 60
         timeAsIndexThroughDay = round(hour + minAsFraction)
-        tidesKnownIndexes.append(timeAsIndexThroughDay)
-        tidesList[timeAsIndexThroughDay] = i["height"]
-    print(tidesKnownIndexes)
-    print(tidesList)
+        tidesAll[timeAsIndexThroughDay] = (i["height"], i["type"])
+        tidesKnown.append((timeAsIndexThroughDay, i["height"], i["type"]))
 
-    # Fill in missing items
-    # for i in tidesList:
-    #     if i != None:
-    # steps = []
-    # for item, index in tidesKnownIndexes:
-    #     if index > 0:
-    #         steps.append(index + 1 - index)
-    # print(steps)
-
-    # for i in range(cols):
-    #     # If there already exists a known tide at this index...
-    #     if tidesKnown[i][1]:
-    #         # Append it to the full list
-    #         tidesList.append(tidesKnown[i][1])
-    #     else:
-    #         # Calculate this index's value
-    #         tidesList.append(0.00)
+    # Calculate tides at all other (~20) hours in the 24 hour list
+    for i in range(len(tidesKnown) - 1):
+        selectedTide = tidesKnown[i]  # The current tuple in the list
+        nextTide = tidesKnown[i + 1]  # The next tuple in the list
+        # Get the height difference in these two tuples
+        difference = nextTide[1] - selectedTide[1]
+        # Get the index difference in these two tuples
+        step = nextTide[0] - selectedTide[0]
+        # Figure out how much height each index in-between must increment/decrement
+        increment = difference / step
+        # Note the direction of the step
+        direction = "increasing" if increment > 0 else "decreasing"
+        # Save this increment and direction to the larger tides list
+        for k in range(selectedTide[0] + 1, nextTide[0]):
+            calculatedStep = (tidesAll[k - 1][0] + increment, direction)
+            tidesAll[k] = calculatedStep
+        print(tidesAll)
 
     # Lastly map each item value to match the amount of rows for a nice Y pos
-    for i in tidesList:
-        mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 2, rows))
+    for i in tidesAll:
+        mappedY = round(numberToRange(i[0], 0, locationMaxTideHeight, 2, rows))
         # Add this value to the new array
-        tidesListMapped.append(mappedY)
-    print(tidesListMapped)
+        tidesMapped.append(mappedY)
+    # print(tidesMapped)
 
     # Swell height
     # 24 items by default (item amount should equal rows amount)
@@ -105,7 +102,7 @@ try:
         mappedHeight = int(numberToRange(
             i["height"], 0, locationMaxSwellHeight, 0, 14))
         swellDataScores.append(mappedHeight)
-    # print(swellDataScores)
+    print("Swell:\t", swellDataScores)
 
     # Wind direction and speed
     # 24 items by default (item amount should equal rows amount)
@@ -116,19 +113,22 @@ try:
         if i["direction"] >= locationWindDirRangeStart and i["direction"] <= locationWindDirRangeEnd:
             # Best possible wind conditions, give high score
             windDataScores.append(10 + mappedSpeed)
-        # -45° of core range start
-        elif i["direction"] >= locationWindDirRangeStart - 45 and i["direction"] < locationWindDirRangeStart:
+            print("Great wind conditions at", i["dateTime"])
+        # -locationWindDirRangeBuffer° of core range start
+        elif i["direction"] >= locationWindDirRangeStart - locationWindDirRangeBuffer and i["direction"] < locationWindDirRangeStart:
             # Okay wind conditions, give medium score
             windDataScores.append(6 + mappedSpeed)
-         # +45° of core range end
-        elif i["direction"] > locationWindDirRangeEnd and i["direction"] <= locationWindDirRangeEnd - 45:
+            print("Okay wind conditions at", i["dateTime"])
+         # +locationWindDirRangeBuffer° of core range end
+        elif i["direction"] > locationWindDirRangeEnd and i["direction"] <= locationWindDirRangeEnd - locationWindDirRangeBuffer:
             # Okay wind conditions, give medium score
             windDataScores.append(6 + mappedSpeed)
+            print("Okay wind conditions at", i["dateTime"])
         else:
             # Poor wind conditions, give nothing
             # Subtract increased wind since it's blowing in the wrong direction
             windDataScores.append(0 - mappedSpeed)
-    # print(windDataScores)
+    print("Wind:\t", windDataScores)
 
     # Combine all of the above into a final score
     combinedScores = []
@@ -136,12 +136,18 @@ try:
         # Add the values together
         sum = swellDataScores[i] + windDataScores[i]
         if sum < 1:
-            # For a negative score sum, set to a minimum so a visible dot appears
-            combinedScores.append(minDotSizeActive)
+            # This dot has a negative store, probably dragged down by poor wind
+            # Check if its swellDataScore is larger than the dot size minimum
+            if swellDataScores[i] > minDotSizeActive:
+                # If so, set the dot size to its swellDataScore
+                combinedScores.append(swellDataScores[i])
+            else:
+                # Otherwise the swellDataScore is still below the visible minimum, so set it to that
+                combinedScores.append(minDotSizeActive)
         else:
-            # Otherwise show the true score sum
+            # This dot has a positive score and can render as intended
             combinedScores.append(sum)
-    # print(combinedScores)
+    print("Scores:\t", combinedScores)
 
     # Start rendering
     canvas = Image.new(
@@ -166,33 +172,24 @@ try:
             cellX = valueX + offsetX
             cellY = valueY + offsetY
 
-            # Container
-            # draw.rectangle(
-            #     ((cellX, cellY), (cellX + cellScale, cellY + cellScale)), fill="white")
-
-            # Shape
-            # Paint another square within that square at that grid coordinate
-            # dotWidth = random.randint(2, cellScale * 1.5)
-            # dotWidth = 2
-
             # Without tides
-            dotWidth = combinedScores[jj]
+            dotSize = combinedScores[jj]
 
             # With tides
-            # Reversed to anchor at bottom
-            if rows - (tidesListMapped[jj]) <= kk:
+            # Use negative value to anchor at last row
+            if rows - (tidesMapped[jj]) <= kk:
                 # This dot's coordinates are within the tide height, so render fully according to its score
-                dotWidth = combinedScores[jj]
+                dotSize = combinedScores[jj]
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
-                dotWidth = minDotSizeInactive
+                dotSize = minDotSizeInactive
 
             # Calculate how to center this dot
-            itemOffset = int((cellScale - dotWidth) / 2)
+            itemOffset = int((cellScale - dotSize) / 2)
 
             # Draw the dot
             draw.ellipse(
-                ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + dotWidth, cellY + itemOffset + dotWidth)), fill="black")
+                ((cellX + itemOffset, cellY + itemOffset), (cellX + itemOffset + dotSize, cellY + itemOffset + dotSize)), fill="black")
 
             # Move to the next column in the row
             valueX += cellScale
