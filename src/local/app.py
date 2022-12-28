@@ -32,10 +32,12 @@ containerWidth = 384
 cols = 24  # Must be at least 24
 rows = cols
 # Set scale for each cell
-cellScale = containerWidth / cols
-maxDotSizeActive = cellScale * 1.25
+cellSize = containerWidth / cols
+maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
+
+dropOff = 0.03
 
 # Display resolution
 EPD_WIDTH = 648
@@ -46,9 +48,9 @@ def numberToRange(num, inMin, inMax, outMin, outMax):
     return outMin + (float(num - inMin) / float(inMax - inMin) * (outMax - outMin))
 
 
-# A function that takes a list of length 24, containing tuples
-# Trims that list to the hourStart and hourEnd window
-# Then resamples (upscales) that list to match the amount of columns (which by default is also 24)
+# A function that takes a list of length 24, containing tuples,
+# ...trims that list to the hourStart and hourEnd window,
+# ...then resamples (upscales) that list to match the amount of columns (which by default is also 24)
 def resampleList(originalList, targetTupleItem):
     simplifiedList = []
     trimmedList = []
@@ -93,13 +95,13 @@ try:
             numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.6)
         )
         swellScores.append(mappedHeight)
-    print("Swell Score:\t", swellScores)
+    print("————————————", "\nSwell Score:\t", swellScores)
 
     # Wind direction and speed
     # Resample items to match hourStart and hourEnd window
     windSpeedDataResampled = resampleList(windData, "speed")
     windDirDataResampled = resampleList(windData, "direction")
-    windDataScores = []
+    windScores = []
     for i in range(cols):
         mappedSpeed = int(
             numberToRange(windSpeedDataResampled[i], 0, 30, 0, maxDotSizeActive * 0.3)
@@ -110,7 +112,7 @@ try:
             and windDirDataResampled[i] <= locationWindDirRangeEnd
         ):
             # Best possible wind conditions, give high score
-            windDataScores.append(maxDotSizeActive * 0.4 + mappedSpeed)
+            windScores.append(int(maxDotSizeActive * 0.4 + mappedSpeed))
         # Core range - buffer
         elif (
             windDirDataResampled[i]
@@ -118,7 +120,7 @@ try:
             and windDirDataResampled[i] < locationWindDirRangeStart
         ):
             # Okay wind conditions, give medium score
-            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
+            windScores.append(int(maxDotSizeActive * 0.2 + mappedSpeed))
         # Core range + buffer
         elif (
             windDirDataResampled[i] > locationWindDirRangeEnd
@@ -126,18 +128,18 @@ try:
             <= locationWindDirRangeEnd - locationWindDirRangeBuffer
         ):
             # Okay wind conditions, give medium score
-            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
+            windScores.append(int(maxDotSizeActive * 0.2 + mappedSpeed))
         else:
             # Poor wind conditions, give nothing
             # Subtract increased wind since it's blowing in the wrong direction
-            windDataScores.append(0 - mappedSpeed)
-    print("Wind Score:\t", windDataScores)
+            windScores.append(int(0 - mappedSpeed))
+    print("Wind Score:\t", windScores)
 
     # Combine all of the above into a total score
     totalScores = []
     for i in range(rows):
         # Add the values together
-        sum = swellScores[i] + windDataScores[i]
+        sum = swellScores[i] + windScores[i]
         if sum < minDotSizeActive:
             # This dot has a poor score, probably dragged down by poor wind
             # Assign it the minimum active dot size
@@ -186,7 +188,7 @@ try:
         mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 2, rows))
         # Add this value to the new array
         tidesMapped.append(mappedY)
-    print("—————————————", "\nTides Height:\t", tidesMapped)
+    print("————————————", "\nTides Height:\t", tidesMapped, "\n————————————")
 
     # Start rendering
     canvas = Image.new("1", (EPD_WIDTH, EPD_HEIGHT), 255)  # 255: clear the frame
@@ -194,8 +196,8 @@ try:
     draw = ImageDraw.Draw(canvas)
 
     # Center grid
-    offsetX = int((EPD_WIDTH - (cols * cellScale)) / 2)
-    offsetY = int((EPD_HEIGHT - (rows * cellScale)) / 2)
+    offsetX = int((EPD_WIDTH - (cols * cellSize)) / 2)
+    offsetY = int((EPD_HEIGHT - (rows * cellSize)) / 2)
 
     # Prepare variables
     gridIndex = 0
@@ -209,22 +211,27 @@ try:
             cellX = valueX + offsetX
             cellY = valueY + offsetY
 
-            # Without tides
+            # Without tides: unlimited data across full columns
             # dotSize = totalScores[jj]
+            # dotSize = totalScores[jj] - (dropOff * kk)
 
-            # With tides
+            # With tides: limited data to within tide height range
             # Use negative value to anchor at last row
             if rows - (tidesMapped[jj]) <= kk:
+                # TODO: render according to its score BUT increase drop off as the columns go down
+                dotSize = totalScores[jj] + (dropOff + kk)
+
                 # This dot's coordinates are within the tide height, so render fully according to its score
-                dotSize = totalScores[jj]
+                # dotSize = totalScores[jj]
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
                 dotSize = minDotSizeInactive
 
-            # Calculate how to center this dot
-            itemOffset = int((cellScale - dotSize) / 2)
+            # Calculate the center of this dot according to its size
+            itemOffset = int((cellSize - dotSize) / 2)
 
-            # Draw the dot
+            # Draw the dot in the center of its cell area
+            print(f"Row: {kk + 1:02d}\t", f"Col: {jj + 1:02d}\t", f"Size: {dotSize}")
             draw.ellipse(
                 (
                     (cellX + itemOffset, cellY + itemOffset),
@@ -234,11 +241,11 @@ try:
             )
 
             # Move to the next column in the row
-            valueX += cellScale
+            valueX += cellSize
             # Store what gridIndex we're up to
             gridIndex += 1
         # Go to next row down
-        valueY += cellScale
+        valueY += cellSize
         # Go to first column on left
         valueX = 0
 
