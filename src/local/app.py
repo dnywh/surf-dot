@@ -3,8 +3,9 @@ import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
 
-# import numpy as np
-from scipy import signal
+from scipy import signal  # for figuring out tide heights between hours
+import json
+
 
 # Secrets
 # Renamed to 'env' to avoid clashing with numpy's required file of the same name
@@ -14,10 +15,12 @@ willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
 locationId = 6833  # Coolum Beach
 locationMaxSwellHeight = 3
 locationMaxTideHeight = 3  # TODO: Must this match the SwellHeight?
-locationWindDirRangeStart = 180
+locationWindDirRangeStart = 225
 locationWindDirRangeEnd = 315
 # Amount of degrees on either side of range to consider as 'okay' wind conditions
-locationWindDirRangeBuffer = 22
+locationWindDirRangeBuffer = 45
+
+debug = True
 
 # Customise hours 'cropped' from left to right
 hourStart = 6
@@ -59,28 +62,94 @@ def resampleList(originalList, targetTupleItem):
 
 
 try:
-    date = datetime.today().strftime("%Y-%m-%d")
-    # date = "2022-12-29"  # Override with a custom date (Willy Weather's API is limited to +-2 days from today)
-    print(f"Checking surf for {date}...")
+    # Load data
+    if debug == True:
+        date = "Example "
+        print(f"Debugging is on.\nChecking surf from example data file...")
+        f = open("src/example.json")
+        surfData = json.load(f)
+    else:
+        # date = "2022-12-29"  # Optional override with a custom date (Willy Weather's API is limited to +-2 days from today)
+        date = datetime.today().strftime("%Y-%m-%d")
+        print(f"Checking surf for {date}...")
+        surfData = requests.get(
+            f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}"
+        ).json()
 
-    # Parse surf data
-    surfData = requests.get(
-        f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}"
-    ).json()
-
+    # Parse data
     tideData = surfData["forecasts"]["tides"]["days"][0]["entries"]
-    tidesKnown = []
-    tidesAll = [(0, "unknown")] * cols
-    tidesMapped = []
+    tidesAll = [(0, "unknown")] * cols  # Blank list to fill in later
 
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
-    swellDataScores = []
-
     windData = surfData["forecasts"]["wind"]["days"][0]["entries"]
+
+    # Swell height
+    # Resample items to match hourStart and hourEnd window
+    swellDataResampled = resampleList(swellData, "height")
+    # Create scores
+    swellScores = []
+    for i in swellDataResampled:
+        mappedHeight = int(
+            numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.6)
+        )
+        swellScores.append(mappedHeight)
+    print("Swell Score:\t", swellScores)
+
+    # Wind direction and speed
+    # Resample items to match hourStart and hourEnd window
+    windSpeedDataResampled = resampleList(windData, "speed")
+    windDirDataResampled = resampleList(windData, "direction")
     windDataScores = []
+    for i in range(cols):
+        mappedSpeed = int(
+            numberToRange(windSpeedDataResampled[i], 0, 30, 0, maxDotSizeActive * 0.3)
+        )
+        # Core range
+        if (
+            windDirDataResampled[i] >= locationWindDirRangeStart
+            and windDirDataResampled[i] <= locationWindDirRangeEnd
+        ):
+            # Best possible wind conditions, give high score
+            windDataScores.append(maxDotSizeActive * 0.4 + mappedSpeed)
+        # Core range - buffer
+        elif (
+            windDirDataResampled[i]
+            >= locationWindDirRangeStart - locationWindDirRangeBuffer
+            and windDirDataResampled[i] < locationWindDirRangeStart
+        ):
+            # Okay wind conditions, give medium score
+            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
+        # Core range + buffer
+        elif (
+            windDirDataResampled[i] > locationWindDirRangeEnd
+            and windDirDataResampled[i]
+            <= locationWindDirRangeEnd - locationWindDirRangeBuffer
+        ):
+            # Okay wind conditions, give medium score
+            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
+        else:
+            # Poor wind conditions, give nothing
+            # Subtract increased wind since it's blowing in the wrong direction
+            windDataScores.append(0 - mappedSpeed)
+    print("Wind Score:\t", windDataScores)
+
+    # Combine all of the above into a total score
+    totalScores = []
+    for i in range(rows):
+        # Add the values together
+        sum = swellScores[i] + windDataScores[i]
+        if sum < minDotSizeActive:
+            # This dot has a poor score, probably dragged down by poor wind
+            # Assign it the minimum active dot size
+            totalScores.append(minDotSizeActive)
+        else:
+            # This dot has a solid score and can render at its score
+            totalScores.append(sum)
+    print("Total Score:\t", totalScores)
 
     # Tides
     # Replace known items
+    tidesKnown = []
     for i in tideData:
         # Calculate index of each tide data element based on time
         dateString = datetime.strptime(i["dateTime"], "%Y-%m-%d %H:%M:%S")
@@ -112,73 +181,12 @@ try:
     tidesResampled = resampleList(tidesAll, 0)
 
     # Lastly map each item value to match the amount of rows for a nice Y pos
+    tidesMapped = []
     for i in tidesResampled:
         mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 2, rows))
         # Add this value to the new array
         tidesMapped.append(mappedY)
-    print("Tides:\t", tidesMapped)
-
-    # Swell height
-    # Resample items to match hourStart and hourEnd window
-    swellDataResampled = resampleList(swellData, "height")
-    # Create scores
-    for i in swellDataResampled:
-        mappedHeight = int(
-            numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.6)
-        )
-        swellDataScores.append(mappedHeight)
-    print("Swell:\t", swellDataScores)
-
-    # Wind direction and speed
-    # Resample items to match hourStart and hourEnd window
-    windSpeedDataResampled = resampleList(windData, "speed")
-    windDirDataResampled = resampleList(windData, "direction")
-    for i in range(cols):
-        mappedSpeed = int(
-            numberToRange(windSpeedDataResampled[i], 0, 30, 0, maxDotSizeActive * 0.3)
-        )
-        # Core range
-        if (
-            windDirDataResampled[i] >= locationWindDirRangeStart
-            and windDirDataResampled[i] <= locationWindDirRangeEnd
-        ):
-            # Best possible wind conditions, give high score
-            windDataScores.append(maxDotSizeActive * 0.4 + mappedSpeed)
-        # -locationWindDirRangeBuffer° of core range start
-        elif (
-            windDirDataResampled[i]
-            >= locationWindDirRangeStart - locationWindDirRangeBuffer
-            and windDirDataResampled[i] < locationWindDirRangeStart
-        ):
-            # Okay wind conditions, give medium score
-            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
-        # +locationWindDirRangeBuffer° of core range end
-        elif (
-            windDirDataResampled[i] > locationWindDirRangeEnd
-            and windDirDataResampled[i]
-            <= locationWindDirRangeEnd - locationWindDirRangeBuffer
-        ):
-            # Okay wind conditions, give medium score
-            windDataScores.append(maxDotSizeActive * 0.2 + mappedSpeed)
-        else:
-            # Poor wind conditions, give nothing
-            # Subtract increased wind since it's blowing in the wrong direction
-            windDataScores.append(0 - mappedSpeed)
-    print("Wind:\t", windDataScores)
-
-    # Combine all of the above into a final score
-    combinedScores = []
-    for i in range(rows):
-        # Add the values together
-        sum = swellDataScores[i] + windDataScores[i]
-        if sum < minDotSizeActive:
-            # This dot has a poor score, probably dragged down by poor wind
-            # Assign it the minimum active dot size
-            combinedScores.append(minDotSizeActive)
-        else:
-            # This dot has a solid score and can render at its score
-            combinedScores.append(sum)
-    print("Scores:\t", combinedScores)
+    print("—————————————", "\nTides Height:\t", tidesMapped)
 
     # Start rendering
     canvas = Image.new("1", (EPD_WIDTH, EPD_HEIGHT), 255)  # 255: clear the frame
@@ -202,13 +210,13 @@ try:
             cellY = valueY + offsetY
 
             # Without tides
-            # dotSize = combinedScores[jj]
+            # dotSize = totalScores[jj]
 
             # With tides
             # Use negative value to anchor at last row
             if rows - (tidesMapped[jj]) <= kk:
                 # This dot's coordinates are within the tide height, so render fully according to its score
-                dotSize = combinedScores[jj]
+                dotSize = totalScores[jj]
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
                 dotSize = minDotSizeInactive
