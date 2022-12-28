@@ -20,7 +20,7 @@ locationWindDirRangeEnd = 315
 # Amount of degrees on either side of range to consider as 'okay' wind conditions
 locationWindDirRangeBuffer = 45
 
-debug = True
+debug = False
 
 # Customise hours 'cropped' from left to right
 hourStart = 6
@@ -36,8 +36,6 @@ cellSize = containerWidth / cols
 maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
-
-dropOff = 0.03
 
 # Display resolution
 EPD_WIDTH = 648
@@ -92,7 +90,7 @@ try:
     swellScores = []
     for i in swellDataResampled:
         mappedHeight = int(
-            numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.6)
+            numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.7)
         )
         swellScores.append(mappedHeight)
     print("————————————", "\nSwell Score:\t", swellScores)
@@ -218,11 +216,24 @@ try:
             # With tides: limited data to within tide height range
             # Use negative value to anchor at last row
             if rows - (tidesMapped[jj]) <= kk:
-                # TODO: render according to its score BUT increase drop off as the columns go down
-                dotSize = totalScores[jj] + (dropOff + kk)
-
                 # This dot's coordinates are within the tide height, so render fully according to its score
+                # Consistent dot sizing down column:
                 # dotSize = totalScores[jj]
+
+                # Decayed dot sizing down column:
+                startRow = rows - tidesMapped[jj]
+                currentRow = kk
+                lastRow = rows - 1
+
+                maxDotSizeValue = totalScores[jj]
+
+                mappedDecay = int(
+                    numberToRange(
+                        currentRow, startRow, lastRow, maxDotSizeValue, minDotSizeActive
+                    )
+                )
+                dotSize = mappedDecay
+
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
                 dotSize = minDotSizeInactive
@@ -230,8 +241,6 @@ try:
             # Calculate the center of this dot according to its size
             itemOffset = int((cellSize - dotSize) / 2)
 
-            # Draw the dot in the center of its cell area
-            print(f"Row: {kk + 1:02d}\t", f"Col: {jj + 1:02d}\t", f"Size: {dotSize}")
             draw.ellipse(
                 (
                     (cellX + itemOffset, cellY + itemOffset),
