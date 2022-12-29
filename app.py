@@ -4,8 +4,7 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 
 from scipy import signal  # For figuring out tide heights between hours
-import json  # For local data
-
+import json  # For testing with local data
 
 # Secrets
 # Renamed to 'env' to avoid clashing with numpy's required file of the same name
