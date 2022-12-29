@@ -3,8 +3,8 @@ import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
 
-from scipy import signal  # for figuring out tide heights between hours
-import json
+from scipy import signal  # For figuring out tide heights between hours
+import json  # For local data
 
 
 # Secrets
@@ -13,8 +13,8 @@ willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
 
 # Customise for your location
 locationId = 6833  # Coolum Beach
+locationMaxTideHeight = 3
 locationMaxSwellHeight = 3
-locationMaxTideHeight = 3  # TODO: Must this match the SwellHeight?
 locationWindDirRangeStart = 225
 locationWindDirRangeEnd = 315
 # Amount of degrees on either side of range to consider as 'okay' wind conditions
@@ -211,7 +211,6 @@ try:
 
             # Without tides: unlimited data across full columns
             # dotSize = totalScores[jj]
-            # dotSize = totalScores[jj] - (dropOff * kk)
 
             # With tides: limited data to within tide height range
             # Use negative value to anchor at last row
@@ -224,7 +223,6 @@ try:
                 startRow = rows - tidesMapped[jj]
                 currentRow = kk
                 lastRow = rows - 1
-
                 maxDotSizeValue = totalScores[jj]
 
                 mappedDecay = int(
