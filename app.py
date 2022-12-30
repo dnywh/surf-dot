@@ -1,15 +1,31 @@
-import env
-import requests
+import sys
+import os
+import logging  # Write to console
 from datetime import datetime
-from PIL import Image, ImageDraw
-
+import requests
 from scipy import signal  # For figuring out tide heights between hours
+from PIL import Image, ImageDraw
+import math  # For optional wind tail trigonometry
 import json  # For testing with local data
 
-# Secrets
-# Renamed to 'env' to avoid clashing with numpy's required file of the same name
-willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
+# Get required items from other root-level directories
+libDir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "lib"
+)
+if os.path.exists(libDir):
+    sys.path.append(libDir)
 
+from waveshare_epd import (
+    epd7in5_V2,
+)  # Change to whatever Waveshare model you have, or add a different display's driver to /lib
+
+import env  # For Willy Weather access token
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Settings
+willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
 # Customise for your location
 locationId = 6833  # Coolum Beach
 locationMaxTideHeight = 3
@@ -19,16 +35,17 @@ locationWindDirRangeEnd = 315
 # Amount of degrees on either side of range to consider as 'okay' wind conditions
 locationWindDirRangeBuffer = 45
 
-debug = False
-
 # Customise hours 'cropped' from left to right
 hourStart = 6
 hourEnd = 18
 
 # Set design basics
-containerWidth = 384
+bufferX = 4
+bufferY = 14
+margin = 36
+containerWidth = 360 - margin
 # Set cols and rows (grid size)
-cols = 24  # Must be at least 24
+cols = 24  # Expects at least 24
 rows = cols
 # Set scale for each cell
 cellSize = containerWidth / cols
@@ -36,9 +53,8 @@ maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
 
-# Display resolution
-EPD_WIDTH = 648
-EPD_HEIGHT = 480
+showWindTail = False
+debug = False  # Uses local data instead of API call if True
 
 # Number to range function for general mapping
 def numberToRange(num, inMin, inMax, outMin, outMax):
@@ -61,16 +77,21 @@ def resampleList(originalList, targetTupleItem):
 
 
 try:
+    timeStampNice = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    logging.info(f"Kicking off at {timeStampNice}")
+    logging.info(
+        f"Limiting surf data to between the hours of {hourStart:02d}:00 and {hourEnd:02d}:00"
+    )
+
     # Load data
     if debug == True:
-        date = "Example "
-        print(f"Debugging is on.\nChecking surf from example data file...")
-        f = open("src/example.json")
+        logging.info(f"Debugging is on. Checking surf from example data file...")
+        f = open("assets/2022-12-25.json")
         surfData = json.load(f)
     else:
         # date = "2022-12-29"  # Optional override with a custom date (Willy Weather's API is limited to +-2 days from today)
         date = datetime.today().strftime("%Y-%m-%d")
-        print(f"Checking surf for {date}...")
+        logging.info(f"Checking surf for {date}...")
         surfData = requests.get(
             f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}"
         ).json()
@@ -92,7 +113,7 @@ try:
             numberToRange(i, 0, locationMaxSwellHeight, 0, maxDotSizeActive * 0.7)
         )
         swellScores.append(mappedHeight)
-    print("————————————", "\nSwell Score:\t", swellScores)
+    logging.info(f"Swell Score:\t{swellScores}")
 
     # Wind direction and speed
     # Resample items to match hourStart and hourEnd window
@@ -130,7 +151,7 @@ try:
             # Poor wind conditions, give nothing
             # Subtract increased wind since it's blowing in the wrong direction
             windScores.append(int(0 - mappedSpeed))
-    print("Wind Score:\t", windScores)
+    logging.info(f"Wind Score:\t{windScores}")
 
     # Combine all of the above into a total score
     totalScores = []
@@ -144,7 +165,7 @@ try:
         else:
             # This dot has a solid score and can render at its score
             totalScores.append(sum)
-    print("Total Score:\t", totalScores)
+    logging.info(f"Total Score:\t{totalScores}")
 
     # Tides
     # Replace known items
@@ -185,16 +206,20 @@ try:
         mappedY = round(numberToRange(i, 0, locationMaxTideHeight, 2, rows))
         # Add this value to the new array
         tidesMapped.append(mappedY)
-    print("————————————", "\nTides Height:\t", tidesMapped, "\n————————————")
+    logging.info(f"Tides Height:\t{tidesMapped}")
 
     # Start rendering
-    canvas = Image.new("1", (EPD_WIDTH, EPD_HEIGHT), 255)  # 255: clear the frame
+    epd = epd7in5_V2.EPD()
+    epd.init()
+    epd.Clear()
+
+    canvas = Image.new("1", (epd.width, epd.height), 255)  # 255: clear the frame
     # Get a drawing context
     draw = ImageDraw.Draw(canvas)
 
     # Center grid
-    offsetX = int((EPD_WIDTH - (cols * cellSize)) / 2)
-    offsetY = int((EPD_HEIGHT - (rows * cellSize)) / 2)
+    offsetX = bufferX + int((epd.width - (cols * cellSize)) / 2)
+    offsetY = bufferY + int((epd.height - (rows * cellSize)) / 2)
 
     # Prepare variables
     gridIndex = 0
@@ -224,24 +249,47 @@ try:
                 lastRow = rows - 1
                 maxDotSizeValue = totalScores[jj]
 
-                mappedDecay = int(
+                mappedDotSizeDecay = int(
                     numberToRange(
                         currentRow, startRow, lastRow, maxDotSizeValue, minDotSizeActive
                     )
                 )
-                dotSize = mappedDecay
+                dotSize = mappedDotSizeDecay
+
+                # Draw a wind tail line from the edge of the cell to the center, if turned on
+                if showWindTail == True:
+                    r = cellSize / 2
+                    angle = (
+                        windDirDataResampled[jj] - 90
+                    )  # Offset so 0° is due N and 180° is due S
+                    x = r * math.cos(math.radians(angle))
+                    y = r * math.sin(math.radians(angle))
+
+                    mappedWindTailWidthDecay = int(
+                        numberToRange(currentRow, startRow, lastRow, 3, 1)
+                    )
+
+                    draw.line(
+                        (
+                            (cellX + r + x, cellY + r + y),
+                            (cellX + r, cellY + r),
+                        ),
+                        fill="black",
+                        width=mappedWindTailWidthDecay,
+                    )
 
             else:
                 # This dot's coordinates are outside the tide height so render as small as possible irrespective of its score
                 dotSize = minDotSizeInactive
 
-            # Calculate the center of this dot according to its size
-            itemOffset = int((cellSize - dotSize) / 2)
+            # Calculate top-left offset of this dot to center it, according to its size
+            dotOffset = int((cellSize - dotSize) / 2)
 
+            # Draw the main dot
             draw.ellipse(
                 (
-                    (cellX + itemOffset, cellY + itemOffset),
-                    (cellX + itemOffset + dotSize, cellY + itemOffset + dotSize),
+                    (cellX + dotOffset, cellY + dotOffset),
+                    (cellX + dotOffset + dotSize, cellY + dotOffset + dotSize),
                 ),
                 fill="black",
             )
@@ -255,9 +303,22 @@ try:
         # Go to first column on left
         valueX = 0
 
-    canvas.show()
+    # Render all of the above to the display
+    epd.display(epd.getbuffer(canvas))
+
+    # Put display on pause, keeping what's on screen
+    # See sleep.py for wiping the screen clean
+    epd.sleep()
+    logging.info(f"Finishing printing. Enjoy.")
+
+    # Exit application
+    exit()
+
+except IOError as e:
+    logging.info(e)
 
 # Exit plan
 except KeyboardInterrupt:
-    print("Exiting...")
+    logging.info("Exited.")
+    epd7in5_V2.epdconfig.module_exit()
     exit()
