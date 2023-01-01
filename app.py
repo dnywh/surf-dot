@@ -6,23 +6,25 @@ import requests
 from scipy import signal  # For figuring out tide heights between hours
 from PIL import Image, ImageDraw
 import math  # For optional wind tail trigonometry
-import json  # For testing with local data
-
-# Get required items from other root-level directories
-libDir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "lib"
-)
-if os.path.exists(libDir):
-    sys.path.append(libDir)
-
-from waveshare_epd import (
-    epd7in5_V2,
-)  # Change to whatever Waveshare model you have, or add a different display's driver to /lib
-
-import env  # For Willy Weather access token
+import json  # For debugging with local data
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
+
+# Prepare directories so they can be reached from anywhere
+appDir = os.path.dirname(os.path.realpath(__file__))
+assetsDir = os.path.join(appDir, "assets")
+# Get required items from other root-level directories
+parentDir = os.path.dirname(appDir)
+libDir = os.path.join(parentDir, "lib")
+if os.path.exists(libDir):
+    sys.path.append(libDir)
+# Change the below to whatever Waveshare model you have, or add a different display's driver to /lib
+from waveshare_epd import (
+    epd7in5_V2,
+)
+
+import env  # For Willy Weather access token
 
 # Settings
 willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
@@ -53,7 +55,7 @@ maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
 
-showWindTail = False
+showWindTail = True
 debug = False  # Uses local data instead of API call if True
 
 # Number to range function for general mapping
@@ -86,11 +88,11 @@ try:
     # Load data
     if debug == True:
         logging.info(f"Debugging is on. Checking surf from example data file...")
-        f = open("assets/2022-12-25.json")
+        f = open(os.path.join(assetsDir, "2022-12-25.json"))
         surfData = json.load(f)
     else:
-        # date = "2022-12-29"  # Optional override with a custom date (Willy Weather's API is limited to +-2 days from today)
         date = datetime.today().strftime("%Y-%m-%d")
+        # date = "2022-12-29"  # Optional override with a custom date (Willy Weather's API is limited to +-2 days from today)
         logging.info(f"Checking surf for {date}...")
         surfData = requests.get(
             f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}"
@@ -213,7 +215,7 @@ try:
     epd.init()
     epd.Clear()
 
-    canvas = Image.new("1", (epd.width, epd.height), 255)  # 255: clear the frame
+    canvas = Image.new("1", (epd.width, epd.height), "white")
     # Get a drawing context
     draw = ImageDraw.Draw(canvas)
 
@@ -287,10 +289,10 @@ try:
 
             # Draw the main dot
             draw.ellipse(
-                (
+                [
                     (cellX + dotOffset, cellY + dotOffset),
                     (cellX + dotOffset + dotSize, cellY + dotOffset + dotSize),
-                ),
+                ],
                 fill="black",
             )
 
@@ -307,7 +309,6 @@ try:
     epd.display(epd.getbuffer(canvas))
 
     # Put display on pause, keeping what's on screen
-    # See sleep.py for wiping the screen clean
     epd.sleep()
     logging.info(f"Finishing printing. Enjoy.")
 
