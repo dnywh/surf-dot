@@ -100,7 +100,9 @@ try:
 
     # Parse data
     tideData = surfData["forecasts"]["tides"]["days"][0]["entries"]
-    tidesAll = [(0, "unknown")] * cols  # Blank list to fill in later
+    tidesAll = [
+        (0, "unknown")
+    ] * 24  # Blank list to fill in later, for all 24 hours of the day
 
     swellData = surfData["forecasts"]["swell"]["days"][0]["entries"]
     windData = surfData["forecasts"]["wind"]["days"][0]["entries"]
@@ -178,9 +180,18 @@ try:
         hour = int(datetime.strftime(dateString, "%H"))
         min = int(datetime.strftime(dateString, "%M"))
         minAsFraction = min / 60
+        # Round timestamp to nearest hour
         timeAsIndexThroughDay = round(hour + minAsFraction)
-        tidesAll[timeAsIndexThroughDay] = (i["height"], i["type"])
-        tidesKnown.append((timeAsIndexThroughDay, i["height"], i["type"]))
+        # If nearest hour is within the 0–23 range
+        if timeAsIndexThroughDay < 24:
+            # Continue as planned
+            tidesAll[timeAsIndexThroughDay] = (i["height"], i["type"])
+            tidesKnown.append((timeAsIndexThroughDay, i["height"], i["type"]))
+        else:
+            # If not, this tide has been rounded up to midnight (tomorrow)
+            # Bump down to 11pm instead (or omit)
+            tidesAll[timeAsIndexThroughDay - 1] = (i["height"], i["type"])
+            tidesKnown.append((timeAsIndexThroughDay - 1, i["height"], i["type"]))
 
     # Calculate unknown tides in between known ones
     for i in range(len(tidesKnown) - 1):
