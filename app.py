@@ -3,10 +3,11 @@ import os
 import logging  # Write to console
 from datetime import datetime
 import requests
-from scipy import signal  # For figuring out tide heights between hours
-from PIL import Image, ImageDraw
 import math  # For optional wind tail trigonometry
 import json  # For debugging with local data
+
+from PIL import Image, ImageDraw
+from scipy import signal  # For figuring out tide heights between hours
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
