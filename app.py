@@ -24,12 +24,15 @@ if os.path.exists(libDir):
 from waveshare_epd import epd5in83_V2 as display
 
 # Adjust your optical offsets from one place
-import layout
+# import layout
+# See Pi Frame for usage:
+# https://github.com/dnywh/pi-frame
 
 import env  # For Willy Weather access token
 
 # Settings
 willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
+headers = {"User-Agent": "Surf Grid", "From": "endless.paces-03@icloud.com"}
 # Customise for your location
 locationId = 6833  # Coolum Beach
 locationMaxTideHeight = 3
@@ -43,11 +46,18 @@ locationWindDirRangeBuffer = 45
 hourStart = 6
 hourEnd = 18
 
-# Set design basics
+# Settings
 margin = 36
-containerSize = layout.size - margin
-offsetX = layout.offsetX
-offsetY = layout.offsetY
+
+# Shared optical sizing and offsets with Pi Frame
+# containerSize = layout.size - margin
+# offsetX = layout.offsetX
+# offsetY = layout.offsetY
+# Manual optical sizing and offsets
+containerSize = 360 - margin
+offsetX = 0
+offsetY = 16
+
 # Set cols and rows (grid size)
 cols = 24  # Expects at least 24
 rows = cols
@@ -57,7 +67,7 @@ maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
 
-showWindTail = True
+showWindTail = False
 debug = False  # Uses local data instead of API call if True
 
 # Number to range function for general mapping
@@ -97,7 +107,8 @@ try:
         # date = "2022-12-29"  # Optional override with a custom date (Willy Weather's API is limited to +-2 days from today)
         logging.info(f"Checking surf for {date}...")
         surfData = requests.get(
-            f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}"
+            f"https://api.willyweather.com.au/v2/{willyWeatherApiKey}/locations/{locationId}/weather.json?forecasts=tides,swell,wind&days=1&startDate={date}",
+            headers=headers,
         ).json()
 
     # Parse data
