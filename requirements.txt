@@ -1,3 +1,3 @@
-Pillow
+python3-pil
 python3-scipy
-requests
+python3-requests

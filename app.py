@@ -26,6 +26,7 @@ from waveshare_epd import epd5in83_V2 as display
 
 # Adjust your optical offsets from one place
 # import layout
+
 # See Pi Frame for usage:
 # https://github.com/dnywh/pi-frame
 
@@ -34,7 +35,8 @@ import env  # For Willy Weather access token
 # Settings
 willyWeatherApiKey = env.WILLY_WEATHER_API_KEY
 headers = {"User-Agent": "Surf Grid", "From": "endless.paces-03@icloud.com"}
-# Customise for your location
+
+# Location options
 locationId = 6833  # Coolum Beach
 locationMaxTideHeight = 3
 locationMaxSwellHeight = 3
@@ -43,19 +45,17 @@ locationWindDirRangeEnd = 315
 # Amount of degrees on either side of range to consider as 'okay' wind conditions
 locationWindDirRangeBuffer = 45
 
-# Customise hours 'cropped' from left to right
-hourStart = 6
-hourEnd = 18
-
-# Settings
+# Design options
 margin = 36
 
 # Shared optical sizing and offsets with Pi Frame
-# containerSize = layout.size - margin
+# maskWidth = layout.maskWidth - margin
+# maskHeight = layout.maskHeight - margin
 # offsetX = layout.offsetX
 # offsetY = layout.offsetY
 # Manual optical sizing and offsets
-containerSize = 360 - margin
+maskWidth = 360 - margin
+maskHeight = 360 - margin
 offsetX = 0
 offsetY = 16
 
@@ -63,13 +63,18 @@ offsetY = 16
 cols = 24  # Expects at least 24
 rows = cols
 # Set scale for each cell
-cellSize = containerSize / cols
+cellSize = maskWidth / cols
 maxDotSizeActive = cellSize * 2
 minDotSizeActive = 4
 minDotSizeInactive = 2
-
 showWindTail = False
+# Customise hours 'cropped' from left to right
+hourStart = 6
+hourEnd = 18
+
+# Other
 debug = False  # Uses local data instead of API call if True
+exportImages = False
 
 # Number to range function for general mapping
 def numberToRange(num, inMin, inMax, outMin, outMax):
@@ -331,6 +336,23 @@ try:
 
     # Render all of the above to the display
     epd.display(epd.getbuffer(canvas))
+
+    # Save out
+    if exportImages == True:
+        # Prepare directory for saving image(s)
+        exportsDir = os.path.join(appDir, "exports")
+        timeStampSlugToMin = datetime.today().strftime("%Y-%m-%d-%H-%M")
+        imageDir = os.path.join(exportsDir, timeStampSlugToMin)
+        if not os.path.exists(exportsDir):
+            os.makedirs(exportsDir)
+        if not os.path.exists(imageDir):
+            os.mkdir(imageDir)
+        # Save image in its directory
+        canvas.save(os.path.join(imageDir, f"{timeStampSlugToMin}.jpg"))
+        # Also save text output
+        output = f"Printed at:\t{timeStampNice}\nHours:\t\t{hourStart:02d}:00 to {hourEnd:02d}:00\nSwell scores:\t{swellScores}\nWind scores:\t{windScores}\nTotal scores:\t{totalScores}\nTide heights:\t{tidesMapped}"
+        with open(os.path.join(imageDir, f"{timeStampSlugToMin}.txt"), "w") as f:
+            f.write(output)
 
     # Put display on pause, keeping what's on screen
     epd.sleep()
