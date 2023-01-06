@@ -1,56 +1,107 @@
 # Surf Grid
 
-Use your Pi and Waveshare ePaper/e-ink display to show the day's surf report in the style of Kōhei Sugiura:
+![Surf Grid Sequence.gif](https://res.cloudinary.com/dannywhite/image/upload/v1672986915/github/surf-grid-sequence.gif)
 
-![Kōhei Sugiura's stamps for the 1972 Olympics](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg/1600px-Stamps_of_Germany_%28BRD%29%2C_Olympiade_1972%2C_Blockausgabe_1971%2C_Markenblock.jpg?20070622084910)
-_Image source: [Wikimedia commons](https://w.wiki/69Lz)_
+Surf Grid is a [Pi Frame](https://github.com/dnywh/pi-frame) app. It prints an abstract surf report in the style of [Kōhei Sugiura](https://w.wiki/69Lz) to an e-ink display via Raspberry Pi.
 
-## What do I need to get started?
+Surf Grid relies on the [WillyWeather API](https://www.willyweather.com.au/info/api.html) for location-specific wind, tide, and swell forecast data.
 
-See requirements.txt but install manually to get around Raspberry Pi limitations. Example:
+## Prerequisites
+
+To run Surf Grid you need to first:
+
+1. Join a Wi-Fi network on your Raspberry Pi
+2. Enable SSH on your Raspberry Pi
+3. Plug in a Waveshare e-Paper or similar display to your Raspberry Pi
+
+Surf Grid works great with [Pi Frame](https://github.com/dnywh/pi-frame), which includes the Waveshare drivers amongst other things like a scheduling template. If you’d prefer not to use Pi Frame, you’ll need to upload the [Waveshare e-Paper display drivers](https://github.com/waveshare/e-Paper/tree/master/RaspberryPi_JetsonNano/python/lib/waveshare_epd) (or similar) to your Raspberry Pi in a _lib_ directory that is a sibling of Surf Grid’s. Here's an example:
+
+```
+.
+└── surf-grid
+└── lib
+    └── waveshare_epd
+        ├── __init__.py
+        ├── epdconfig.py
+        └── epd5in83_V2
+```
+
+Either way, Waveshare displays require some additional setup. See the [Hardware Connection](https://www.waveshare.com/wiki/7.5inch_e-Paper_HAT_Manual#Hardware_Connection) and [Python](https://www.waveshare.com/wiki/7.5inch_e-Paper_HAT_Manual#Python) sections of your model’s manual.
+
+## Get started
+
+If you haven’t already, copy all the contents of this Surf Grid repository over to the main directory of your Raspberry Pi.
+
+### Set the display driver
+
+Look for this line as the last import in _[app.py](https://github.com/dnywh/surf-grid/blob/main/app.py)_:
+
+```python
+from waveshare_epd import epd5in83_V2 as display
+```
+
+Swap out the `epd5in83_V2` for your Waveshare e-Paper display driver, which should be in the _lib_ directory. Non-Waveshare displays should be imported here too, although you’ll need to make display-specific adjustments in the handful of places `display` is called further on.
+
+### Install required packages
+
+See _[requirements.txt](https://github.com/dnywh/surf-grid/blob/main/requirements.txt)_ for a short list of required packages. Install each package on your Raspberry Pi using `sudo apt-get`. Here’s an example:
 
 ```bash
 sudo apt-get update
+sudo apt-get install python3-pil
+sudo apt-get install python3-requests
 sudo apt-get install python3-scipy
 ```
 
-You can run the [local](/src/local) version with only:
+### Enter your WillyWeather credentials
 
-- A [Willy Weather API](https://www.willyweather.com.au/info/api.html) key
+Fill out an *env.py* file in the Surf Grid directory with your [WillyWeather API key](https://www.willyweather.com.au/account/api.html). An example is provided in [_env.example.py_](https://github.com/dnywh/surf-grid/blob/main/env.example.py).
 
-To make a nice picture frame display you also need:
+### Run the app
 
-- A Raspberry Pi Zero W or better
-- A Waveshare ePaper display
+Run Surf Grid just like you would any other Python file on a Raspberry Pi:
 
-## Options
+```bash
+cd surf-grid
+python3 app.py
+```
 
-Enable `showWindTail` to see a visual of the wind direction. Note that wind direction quality is already taken into account in the `dotSize` calculation, with offshore winds preferred.
+Surf Grid is noisy by default. Look for the results in Terminal.
 
-## How do I customise the surf report location?
+---
 
-Surf Grid is set to Coolum Beach, Qld, Australia.
+## Usage
 
-First you'll need to [search](https://www.willyweather.com.au/api/docs/v2.html#search) Willy Weather for the `id` of the coastal location that you'd like to base your surf report off. Then replace the value of `locationId` in [app.py](/src/zero/app.py) to this new `id`.
+### Run on a schedule
 
-You should also tweak the other `location` parameters to match your local area's conditions, such as the offshore wind range and maximum swell height.
+See [Pi Frame](https://github.com/dnywh/pi-frame) for a crontab template and usage instructions.
 
-## Can I run this on a Pico W?
+### Design options
 
-In my experience, you can only select two of the following features before an app gets too big for the Pico W:
+Surf Grid contains several visual design parameters in _[app.py](https://github.com/dnywh/surf-grid/blob/main/app.py)_.
 
-- Loop through lists to create a data visualisation
-- Use real-world data via an API
-- Render this to an attached display
+| Option         | Type    | Description                                                                                                             |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `showWindTail` | Boolean | Shows a visual of the wind direction. Note that the wind direction is taken into account for the `dotSize` calculation. |
+| `hourStart`    | Integer | An hour of the day. Sets the first column of the grid.                                                                  |
+| `hourEnd`      | Integer | A later hour of the day. Sets the last column of the grid.                                                              |
+| `cols`         | Integer | The amount of columns between (and including) `hourStart` and `hourEnd`.                                                |
 
-Surf Grid unfortunately needs all three.
+Several more design option variables exist to affect dot size and grid composition.
 
-See [this gist](https://gist.github.com/dnywh/7a56db9b077843e5926ff594c7ecd375) instead for a Pico W artwork generator based on Kōhei Sugiura's work. It's essentially Surf Grid with random data.
+### Location options
 
-If you still want to try getting this to run on the Pico, feel free to start from my [last commit](https://github.com/dnywh/surf-grid/blob/ac531aa3aa59acd1ebbf5a066347d1437d4da284/src/pico/app.py) before giving up. Please reach out if you get it to work.
+Surf Grid defaults to Coolum Beach, Queensland, Australia. Given that beach on the east coast of Australia, Surf Grid determines westerly winds as favourable offshore winds and easterly winds as poor onshore winds. Here’s where that parameter is passed, amongst other location-specific parameters:
 
-## Limitations
+| Option                       | Type    | Description                                                                                                                                               |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locationId`                 | Integer | Sets where the surf forecast is for. See the [API documentation](https://www.willyweather.com.au/api/docs/v2.html#search) for finding your location’s ID. |
+| `locationMaxTideHeight`      | Integer | Maximum tide height for that location in metres. Affects how tall tides are drawn.                                                                        |
+| `locationMaxSwellHeight`     | Integer | Maximum swell height for that location in metres. Affects `dotSize`.                                                                                      |
+| `locationWindDirRangeStart`  | Integer | Start degree (going clockwise) for optimal wind origin. Affects `dotSize`.                                                                                |
+| `locationWindDirRangeEnd`    | Integer | End degree (going clockwise) for optimal wind origin. Affects `dotSize`.                                                                                  |
+| `locationWindDirRangeBuffer` | Integer | A buffer range on either end for minimal `dotSize` scoring.                                                                                               |
 
-### Willy Weather API
+### Save to folder
 
-The Willy Weather API is only useful for immediate forecasts, such as the current day. This is because removes past swell data if it is older than 48 hours. Wind data also seems to only be available a few days in advance.
+Surf Grid contains an `exportImages` boolean option in _[app.py](https://github.com/dnywh/surf-grid/blob/main/app.py)._ When `True` it saves both an image and text file to a timestamped directory within an _exports_ directory.

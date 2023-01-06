@@ -1,5 +1,6 @@
 # Files and folders I don't want to share
 secrets.py
+exports
 env.py
 # Computer stuff
 __pycache__
